@@ -1,0 +1,9 @@
+# 忽略依赖包
+node_modules/
+# 忽略打包产物
+client/build/
+# 忽略环境配置
+.env
+# 日志、系统文件
+npm-debug.log
+.DS_Store

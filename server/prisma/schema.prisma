@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  username      String    @unique @db.VarChar(50)
+  email         String    @unique @db.VarChar(100)
+  passwordHash  String    @db.VarChar(255)
+  avatarUrl     String?   @db.VarChar(500)
+  nickname      String?   @db.VarChar(50)
+  gender        String?   @db.VarChar(10)
+  birthday      DateTime?
+  phone         String?   @db.VarChar(20)
+  bio           String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tripPlans     TripPlan[]
+  posts         Post[]
+  comments      Comment[]
+  followers     Follow[]  @relation("Following")
+  following     Follow[]  @relation("Follower")
+}
+
+model TripPlan {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String    @db.VarChar(200)
+  destination String    @db.VarChar(200)
+  startDate   DateTime
+  endDate     DateTime
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripDays    TripDay[]
+}
+
+model TripDay {
+  id         String  @id @default(uuid())
+  tripPlanId String
+  dayIndex   Int
+  date       DateTime
+  label      String  @db.VarChar(50)
+  tripPlan   TripPlan @relation(fields: [tripPlanId], references: [id], onDelete: Cascade)
+  spots      Spot[]
+}
+
+model Spot {
+  id         String  @id @default(uuid())
+  tripDayId  String
+  name       String  @db.VarChar(200)
+  address    String  @db.VarChar(500)
+  lng        Decimal @db.Decimal(10, 7)
+  lat        Decimal @db.Decimal(10, 7)
+  orderIndex Int
+  tags       Json?
+  tripDay    TripDay @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id            String    @id @default(uuid())
+  userId        String
+  title         String    @db.VarChar(200)
+  content       String    @db.Text
+  category      String?   @db.VarChar(50)
+  destination   String?   @db.VarChar(200)
+  coverImage    String?   @db.VarChar(500)
+  images        Json?
+  tags          Json?
+  likesCount    Int       @default(0)
+  commentsCount Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+}
+
+model Comment {
+  id          String  @id @default(uuid())
+  postId      String
+  userId      String
+  content     String  @db.Text
+  likesCount  Int     @default(0)
+  createdAt   DateTime @default(now())
+  post        Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
